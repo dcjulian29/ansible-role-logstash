@@ -1,0 +1,13 @@
+---
+logstash_env_additional: []
+logstash_data_dir: "/opt/{{ logstash_name }}"
+logstash_description: Logstash
+logstash_gid: 701
+logstash_image: docker.elastic.co/logstash/logstash
+logstash_name: "logstash_{{ ansible_hostname }}"
+logstash_pipeline_dir: "{{ logstash_data_dir }}/pipeline"
+logstash_uid: 701
+logstash_user: logstash
+logstash_version: "8.9.0"
+logstash_volume:
+  - "{{ logstash_pipeline_dir }}:/usr/share/logstash/pipeline"

@@ -1,0 +1,60 @@
+---
+- name: Ensure Logstash group is present
+  ansible.builtin.group:
+    gid: "{{ logstash_gid }}"
+    name: "{{ logstash_user }}"
+    state: present
+
+- name: Ensure Logstash user is present
+  ansible.builtin.user:
+    create_home: false
+    home: "{{ logstash_data_dir }}"
+    group: "{{ logstash_gid }}"
+    name: "{{ logstash_user }}"
+    shell: /sbin/nologin
+    system: true
+    uid: "{{ logstash_uid }}"
+
+
+- name: Ensure the container volume directories exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ logstash_uid }}"
+    group: "{{ logstash_gid }}"
+    mode: "0770"
+  with_items:
+    - "{{ logstash_data_dir }}"
+    - "{{ logstash_pipeline_dir }}"
+
+- name: Pull specified Logstash docker image
+  community.docker.docker_image:
+    name: "{{ logstash_image }}"
+    source: pull
+    tag: "{{ logstash_version }}"
+  notify: Remove Logstash
+
+- name: Ensure all handlers run before continuing
+  ansible.builtin.meta: flush_handlers
+
+- name: Build environment variables for container
+  ansible.builtin.set_fact:
+    logstash_env: "{{ (logstash_env | combine(item.env)) if item.apply else logstash_env }}"
+  loop: "{{ logstash_config }}"
+
+- name: Ensure Logstash container is created.
+  community.docker.docker_container:
+    command: "--config.reload.automatic"
+    container_default_behavior: no_defaults
+    detach: true
+    env: "{{ logstash_env }}"
+    image: "{{ logstash_image }}:{{ logstash_version }}"
+    interactive: false
+    name: "{{ logstash_name }}"
+    network_mode: host
+    pull: false
+    restart_policy: always
+    state: present
+    user: "{{ logstash_uid }}"
+    volumes: "{{ logstash_volume }}"
+  notify: Restart Logstash

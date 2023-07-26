@@ -1,0 +1,14 @@
+---
+- name: Restart Logstash
+  command: "docker restart {{ item }}"
+  with_items:
+    - "{{ logstash_name }}"
+
+- name: Remove Logstash
+  command: "docker stop {{ item }} && docker rm {{ item }}"
+  register: results
+  with_items:
+    - "{{ logstash_name }}"
+  failed_when: >-
+    results is failed and
+    "No such container" not in results.stderr | default(false)

@@ -1,0 +1,9 @@
+---
+logstash_config:
+  - env: "{{ logstash_env_base }}"
+    apply: true
+  - env: "{{ logstash_env_additional }}"
+    apply: "{{ logstash_env_additional | length > 0 }}"
+logstash_env: { }
+logstash_env_base:
+  TZ: "{{ ansible_date_time.tz }}"
