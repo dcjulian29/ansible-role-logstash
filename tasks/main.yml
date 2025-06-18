@@ -15,7 +15,6 @@
     system: true
     uid: "{{ logstash_uid }}"
 
-
 - name: Ensure the container volume directories exists
   ansible.builtin.file:
     path: "{{ item }}"
